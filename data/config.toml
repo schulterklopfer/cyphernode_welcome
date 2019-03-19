@@ -1,0 +1,12 @@
+[server]
+listen = "0.0.0.0:8080"
+index_template = "templates/index.html"
+
+[gatekeeper]
+status_url = "http://localhost:3333/status"
+key_label = "001"
+key_file = "data/keys.properties"
+cert_file = "data/cert.pem"
+
+
+
