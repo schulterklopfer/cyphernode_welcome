@@ -78,8 +78,8 @@ func StatusHandler(w http.ResponseWriter, r *http.Request) {
 
   defer res.Body.Close()
 
-  if res.Status != "200" {
-    w.WriteHeader(503 )
+  if res.StatusCode != 200 {
+    w.WriteHeader(res.StatusCode )
     return
   }
 
