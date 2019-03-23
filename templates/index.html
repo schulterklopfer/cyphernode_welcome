@@ -4,27 +4,91 @@
 <head>
     <title>Cyphernode status page</title>
     <link rel="stylesheet" href="static/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="static/css/main.css" rel="stylesheet">
 </head>
 
 <body>
-    <div class="container">
-        <div class="card">
-            <div class="card-header">
-                <h1>Cyphernode status page</h1>
+<!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light shadow fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">Start Bootstrap</a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarResponsive">
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item active">
+                        <a class="nav-link" href="#">Home
+                            <span class="sr-only">(current)</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">About</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Services</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#">Contact</a>
+                    </li>
+                </ul>
             </div>
         </div>
+    </nav>
 
-        <div class="card-body">
-
+    <!-- Full Page Image Header with Vertically Centered Content -->
+    <header class="masthead">
+        <div class="container h-100">
+            <div class="row h-100 align-items-center">
+                <div class="col-12 text-center">
+                    <h1 class="font-weight-light">Vertically Centered Masthead Content</h1>
+                    <p class="lead">A great starter layout for a landing page</p>
+                </div>
+            </div>
         </div>
+    </header>
 
-        <li class="card">
+    <!-- Page Content -->
+    <section class="py-5">
+        <div class="container">
+            <h2 class="font-weight-light">Page Content</h2>
+            <li class="card">
+                <div class="progress">
+                    <div class="progress-bar progress-bar-striped active" id="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%;">
+                    </div>
+                </div>
+            </li>
+        </div>
+    </section>
 
-        </li>
-    </div>
 
     <script src="static/js/bootstrap.min.js"></script>
 
+
+
 </body>
+
+<script>
+
+    var loadVerificationProgress = function() {
+        var request = new XMLHttpRequest();
+        request.open('GET', '/verificationprogress');
+        request.responseType = 'text';
+
+        request.onload = function() {
+            var result = JSON.parse( request.response );
+
+            var pBar = document.getElementById('progress-bar');
+            pBar.style.width = (result.verificationprogress*100)+"%";
+
+        };
+
+        request.send();
+    }
+    loadVerificationProgress();
+    setTimeout( loadVerificationProgress, 5000 );
+
+
+</script>
 
 </html>

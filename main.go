@@ -29,6 +29,7 @@ import (
   "crypto/tls"
   "crypto/x509"
   "cyphernode_status/cnAuth"
+  "encoding/json"
   "fmt"
   "github.com/gorilla/mux"
   "github.com/op/go-logging"
@@ -39,8 +40,8 @@ import (
   "os"
 )
 
-type Status struct {
-  Foo string  `json:"foo"`
+type BlockChainInfo struct {
+  Verificationprogress float32  `json:"verificationprogress"`
 }
 
 var auth *cnAuth.CnAuth
@@ -55,7 +56,7 @@ func RootHandler(w http.ResponseWriter, _ *http.Request) {
   t.Execute(w, nil)
 }
 
-func StatusHandler(w http.ResponseWriter, r *http.Request) {
+func VerificationProgressHandler(w http.ResponseWriter, r *http.Request) {
 
   req, err := http.NewRequest("GET", statusUrl, nil)
   if err != nil {
@@ -85,13 +86,18 @@ func StatusHandler(w http.ResponseWriter, r *http.Request) {
 
   body, err := ioutil.ReadAll(res.Body)
 
+  blockChainInfo := new( BlockChainInfo )
+
+  err = json.Unmarshal( body, &blockChainInfo )
+
   if err != nil {
     w.WriteHeader(503 )
     return
   }
 
   w.Header().Set("Content-Type", "application/json")
-  fmt.Fprint(w, bytes.NewBuffer(body))
+  result, err := json.Marshal(&blockChainInfo)
+  fmt.Fprint(w, bytes.NewBuffer(result))
 }
 
 func main() {
@@ -150,7 +156,7 @@ func main() {
 
   router := mux.NewRouter()
   router.HandleFunc("/", RootHandler)
-  router.HandleFunc("/status", StatusHandler)
+  router.HandleFunc("/verificationprogress", VerificationProgressHandler)
   router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
 
   http.Handle("/", router)
