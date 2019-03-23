@@ -3,8 +3,8 @@ listen = "0.0.0.0:8080"
 index_template = "templates/index.html"
 
 [gatekeeper]
-status_url = "http://localhost:3333/status"
-key_label = "001"
+status_url = "https://127.0.0.1/v0/getnewaddress"
+key_label = "003"
 key_file = "data/keys.properties"
 cert_file = "data/cert.pem"
 

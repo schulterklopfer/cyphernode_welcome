@@ -26,6 +26,8 @@ package main
 
 import (
   "bytes"
+  "crypto/tls"
+  "crypto/x509"
   "cyphernode_status/cnAuth"
   "fmt"
   "github.com/gorilla/mux"
@@ -45,16 +47,12 @@ var auth *cnAuth.CnAuth
 var statsKeyLabel string
 var indexTemplate string
 var statusUrl string
+var httpClient *http.Client
 var log = logging.MustGetLogger("main")
 
 func RootHandler(w http.ResponseWriter, _ *http.Request) {
   t,_ := template.ParseFiles(indexTemplate)
   t.Execute(w, nil)
-}
-
-func generateAuthHeaders() map[string]string {
-  result := make( map[string]string, 0 )
-  return result
 }
 
 func StatusHandler(w http.ResponseWriter, r *http.Request) {
@@ -65,8 +63,14 @@ func StatusHandler(w http.ResponseWriter, r *http.Request) {
     return
   }
 
-  res, err := http.DefaultClient.Do(req)
+  bearer, err := auth.BearerFromKey(statsKeyLabel)
+  if err != nil {
+    w.WriteHeader(503 )
+    return
+  }
 
+  req.Header.Set("Authorization", bearer )
+  res,err := httpClient.Do(req)
   if err != nil {
     w.WriteHeader(503 )
     return
@@ -74,21 +78,20 @@ func StatusHandler(w http.ResponseWriter, r *http.Request) {
 
   defer res.Body.Close()
 
-  body, _ := ioutil.ReadAll(res.Body)
+  if res.Status != "200" {
+    w.WriteHeader(503 )
+    return
+  }
 
-  //status := new (Status)
-  //jsonData, _ := json.Marshal(status)
-  w.Header().Set("Content-Type", "application/json")
-  bearer, err := auth.BearerFromKey(statsKeyLabel)
+  body, err := ioutil.ReadAll(res.Body)
+
   if err != nil {
     w.WriteHeader(503 )
     return
   }
-  w.Header().Set("Authorization", bearer )
 
+  w.Header().Set("Content-Type", "application/json")
   fmt.Fprint(w, bytes.NewBuffer(body))
-  return
-
 }
 
 func main() {
@@ -100,18 +103,39 @@ func main() {
 
   if err != nil {
     log.Error(err)
+    return
   }
 
   keysFilePath := viper.GetString("gatekeeper.key_file")
   statsKeyLabel = viper.GetString("gatekeeper.key_label")
   statusUrl = viper.GetString("gatekeeper.status_url")
+  certFile := viper.GetString("gatekeeper.cert_file")
   listenTo := viper.GetString("server.listen")
   indexTemplate = viper.GetString("server.index_template")
+
+  caCert, err := ioutil.ReadFile(certFile)
+  if err != nil {
+    log.Error(err)
+    return
+  }
+
+  caCertPool := x509.NewCertPool()
+  caCertPool.AppendCertsFromPEM(caCert)
+
+  httpClient = &http.Client{
+    Transport: &http.Transport{
+      TLSClientConfig: &tls.Config{
+        RootCAs: caCertPool,
+      },
+    },
+  }
+
 
   file, err := os.Open(keysFilePath)
 
   if err != nil {
     log.Error(err)
+    return
   }
 
   auth, err = cnAuth.NewCnAuthFromFile( file )
@@ -119,6 +143,7 @@ func main() {
 
   if err != nil {
     log.Error(err)
+    return
   }
 
   log.Infof("Started cyphernode status page backend. URL Port [%v] ",listenTo)
