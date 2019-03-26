@@ -39,33 +39,63 @@ var loadVerificationProgress = function() {
     request.onerror = function(e) {  }
 
     request.onload = function() {
-        if (request.readyState==4 && request.status==200){
-            var result;
+        if (request.readyState===4 ){
+            if( request.status===200 ) {
+                var result;
 
-            try {
-                result = JSON.parse( request.response )
-            } catch( e ) {
-                console.log( e );
-            }
+                try {
+                    result = JSON.parse( request.response )
+                } catch( e ) {
+                    console.log( e );
+                }
 
-            if( result && result.verificationprogress ) {
-                result.verificationprogress = parseInt(result.verificationprogress*100000)/100000;
-                if( top.progressStart === 0 ) {
-                    top.progressStart = result.verificationprogress;
-                    top.progressStartTime = (new Date())/1000;
-                } else {
-                    var deltaS = (new Date())/1000 - top.progressStartTime;
-                    var deltaP = result.verificationprogress - top.progressStart;
+                if( result && result.verificationprogress ) {
+                    result.verificationprogress = parseInt(result.verificationprogress*100000)/100000;
+                    if( top.progressStart === 0 ) {
+                        top.progressStart = result.verificationprogress;
+                        top.progressStartTime = parseInt((new Date())/1000);
+                    } else {
+                        var deltaS = parseInt((new Date())/1000) - top.progressStartTime;
+                        var deltaP = result.verificationprogress - top.progressStart;
 
-                    var eta = deltaS/deltaP;
-                    var pBar = document.getElementById('progress-bar');
-                    if( pBar ) {
-                        pBar.style.width = (result.verificationprogress*100)+"%";
+
+                        var eta = 0;
+                        if( deltaP !== 0 ) {
+                            deltaS/deltaP;
+                        }
+                        var pBar = document.getElementById('progress-bar');
+                        if( pBar ) {
+                            if( eta===0 && result.verificationprogress >= 0.99 ) {
+                                pBar.classList.remove("bg-danger", "progress-bar-striped", "progress-bar-animated")
+                                pBar.classList.add("bg-success");
+                            } else {
+                                pBar.classList.remove("bg-danger", "bg-success");
+                                pBar.classList.add("progress-bar-striped", "progress-bar-animated");
+                            }
+
+                            pBar.classList.remove("bg-danger");
+                            pBar.style.width = (result.verificationprogress*100)+"%";
+                        }
+                        var pText = document.getElementById('progress-text');
+                        if( pText ) {
+                            if( eta === 0 && result.verificationprogress >= 0.99 ) {
+                                pText.innerText = "Verification complete!";
+                            } else {
+                                pText.innerText = "Verification complete in "+durationFormatter(eta);
+                            }
+                        }
                     }
-                    var pText = document.getElementById('progress-text');
-                    if( pText ) {
-                        pText.innerText = "Verification complete in "+durationFormatter(eta);
-                    }
+                }
+            } else {
+                var pBar = document.getElementById('progress-bar');
+                if( pBar ) {
+                    pBar.style.width = "100%";
+                    pBar.classList.remove("bg-success", "progress-bar-striped");
+                    pBar.classList.add("bg-danger");
+                }
+                var pText = document.getElementById('progress-text');
+                if( pText ) {
+                    pText.innerText = "Error connecting to cyphernode";
                 }
             }
         }

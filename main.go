@@ -33,6 +33,7 @@ import (
   "fmt"
   "github.com/gorilla/mux"
   "github.com/op/go-logging"
+  "github.com/pkg/errors"
   "github.com/spf13/viper"
   "html/template"
   "io/ioutil"
@@ -44,47 +45,99 @@ type BlockChainInfo struct {
   Verificationprogress float32  `json:"verificationprogress"`
 }
 
+type InstallationInfoFeature struct {
+  Name string `json:"name"`
+  Working bool `json:"working"`
+}
+
+type InstallationInfoContainer struct {
+  Name string `json:"name"`
+  Active bool `json:"active"`
+}
+
+type InstallationInfo struct {
+  Features []InstallationInfoFeature  `json:"features"`
+  Containers []InstallationInfoContainer  `json:"containers"`
+}
+
+
+
 var auth *cnAuth.CnAuth
 var statsKeyLabel string
-var indexTemplate string
+var rootTemplate *template.Template
 var statusUrl string
+var installationInfoUrl string
+var configArchiveUrl string
+var certsUrl string
+
 var httpClient *http.Client
 var log = logging.MustGetLogger("main")
 
 func RootHandler(w http.ResponseWriter, _ *http.Request) {
-  t,_ := template.ParseFiles(indexTemplate)
-  t.Execute(w, nil)
+  installationInfo, err := getInstallatioInfo()
+  if err != nil {
+    log.Errorf("Error retrieving installation info %s", err )
+  }
+  rootTemplate.Execute(w, installationInfo)
 }
 
-func VerificationProgressHandler(w http.ResponseWriter, r *http.Request) {
+func getBodyUsingAuth( url string ) ([]byte,error) {
 
-  req, err := http.NewRequest("GET", statusUrl, nil)
+  req, err := http.NewRequest("GET", url, nil)
   if err != nil {
-    w.WriteHeader(503 )
-    return
+    return nil, err
   }
 
   bearer, err := auth.BearerFromKey(statsKeyLabel)
   if err != nil {
-    w.WriteHeader(503 )
-    return
+    return nil, err
   }
 
   req.Header.Set("Authorization", bearer )
   res,err := httpClient.Do(req)
   if err != nil {
-    w.WriteHeader(503 )
-    return
+    return nil, err
   }
 
   defer res.Body.Close()
 
+  if res.StatusCode == 0 {
+    return nil, err
+  }
+
   if res.StatusCode != 200 {
-    w.WriteHeader(res.StatusCode )
-    return
+    return nil, errors.New("Unexpected http status code")
   }
 
   body, err := ioutil.ReadAll(res.Body)
+
+  if res.StatusCode == 0 {
+    return nil, err
+  }
+
+  return body, nil
+}
+
+func  getInstallatioInfo() (*InstallationInfo,error) {
+
+  body,err := getBodyUsingAuth( installationInfoUrl )
+
+  installationInfo := new( InstallationInfo )
+
+  err = json.Unmarshal( body, &installationInfo )
+
+  fmt.Println( string(body))
+
+  if err != nil {
+    return nil,err
+  }
+
+  return installationInfo,nil
+}
+
+func VerificationProgressHandler(w http.ResponseWriter, r *http.Request) {
+
+  body,err := getBodyUsingAuth( statusUrl )
 
   blockChainInfo := new( BlockChainInfo )
 
@@ -99,6 +152,34 @@ func VerificationProgressHandler(w http.ResponseWriter, r *http.Request) {
   result, err := json.Marshal(&blockChainInfo)
   fmt.Fprint(w, bytes.NewBuffer(result))
 }
+
+
+func ConfigHandler(w http.ResponseWriter, r *http.Request) {
+
+  body,err := getBodyUsingAuth( configArchiveUrl )
+
+  if err != nil {
+    w.WriteHeader(503 )
+    return
+  }
+
+  w.Header().Set("Content-Type", "application/x-7z-compressed")
+  fmt.Fprint(w, bytes.NewBuffer(body))
+}
+
+func CertsHandler(w http.ResponseWriter, r *http.Request) {
+
+  body,err := getBodyUsingAuth( certsUrl )
+
+  if err != nil {
+    w.WriteHeader(503 )
+    return
+  }
+
+  w.Header().Set("Content-Type", "application/x-7z-compressed")
+  fmt.Fprint(w, bytes.NewBuffer(body))
+}
+
 
 func main() {
 
@@ -115,9 +196,18 @@ func main() {
   keysFilePath := viper.GetString("gatekeeper.key_file")
   statsKeyLabel = viper.GetString("gatekeeper.key_label")
   statusUrl = viper.GetString("gatekeeper.status_url")
+  installationInfoUrl = viper.GetString("gatekeeper.installation_info_url")
+  configArchiveUrl = viper.GetString("gatekeeper.config_archive_url")
+  certsUrl = viper.GetString("gatekeeper.certs_url")
   certFile := viper.GetString("gatekeeper.cert_file")
   listenTo := viper.GetString("server.listen")
-  indexTemplate = viper.GetString("server.index_template")
+  indexTemplate := viper.GetString("server.index_template")
+  rootTemplate, err = template.ParseFiles(indexTemplate)
+
+  if err != nil {
+    log.Error(err)
+    return
+  }
 
   caCert, err := ioutil.ReadFile(certFile)
   if err != nil {
@@ -157,6 +247,9 @@ func main() {
   router := mux.NewRouter()
   router.HandleFunc("/", RootHandler)
   router.HandleFunc("/verificationprogress", VerificationProgressHandler)
+  router.HandleFunc("/config.7z", ConfigHandler)
+  router.HandleFunc("/certs.7z", CertsHandler)
+
   router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
 
   http.Handle("/", router)
