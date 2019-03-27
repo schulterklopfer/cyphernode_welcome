@@ -119,18 +119,27 @@ func getBodyUsingAuth( url string ) ([]byte,error) {
 }
 
 func  getInstallatioInfo() (*InstallationInfo,error) {
-
+  log.Info("getInstallatioInfo")
   body,err := getBodyUsingAuth( installationInfoUrl )
+
+  if err != nil {
+    log.Errorf("getInstallatioInfo: %s", err)
+    return nil,err
+  }
+
+  log.Infof("getInstallatioInfo: %", string(body))
+
 
   installationInfo := new( InstallationInfo )
 
   err = json.Unmarshal( body, &installationInfo )
 
-  fmt.Println( string(body))
-
   if err != nil {
+    log.Errorf("getInstallatioInfo: %s", err)
     return nil,err
   }
+
+  log.Info("getInstallatioInfo: json done")
 
   return installationInfo,nil
 }
@@ -139,11 +148,18 @@ func VerificationProgressHandler(w http.ResponseWriter, r *http.Request) {
 
   body,err := getBodyUsingAuth( statusUrl )
 
+  if err != nil {
+    log.Errorf("VerificationProgressHandler: %s", err)
+    w.WriteHeader(503 )
+    return
+  }
+
   blockChainInfo := new( BlockChainInfo )
 
   err = json.Unmarshal( body, &blockChainInfo )
 
   if err != nil {
+    log.Errorf("VerificationProgressHandler: %s", err)
     w.WriteHeader(503 )
     return
   }
@@ -159,6 +175,7 @@ func ConfigHandler(w http.ResponseWriter, r *http.Request) {
   body,err := getBodyUsingAuth( configArchiveUrl )
 
   if err != nil {
+    log.Errorf("ConfigHandler: %s", err)
     w.WriteHeader(503 )
     return
   }
@@ -172,6 +189,7 @@ func CertsHandler(w http.ResponseWriter, r *http.Request) {
   body,err := getBodyUsingAuth( certsUrl )
 
   if err != nil {
+    log.Errorf("CertsHandler: %s", err)
     w.WriteHeader(503 )
     return
   }
@@ -184,12 +202,13 @@ func CertsHandler(w http.ResponseWriter, r *http.Request) {
 func main() {
 
   viper.SetConfigName("config")
+  viper.AddConfigPath("/data")
   viper.AddConfigPath("data")
 
   err := viper.ReadInConfig()
 
   if err != nil {
-    log.Error(err)
+    log.Errorf("Error loading config.toml: %s", err)
     return
   }
 
@@ -202,15 +221,18 @@ func main() {
   certFile := viper.GetString("gatekeeper.cert_file")
   listenTo := viper.GetString("server.listen")
   indexTemplate := viper.GetString("server.index_template")
+
   rootTemplate, err = template.ParseFiles(indexTemplate)
 
   if err != nil {
+    log.Errorf("Error loading root template: %s", err)
     log.Error(err)
     return
   }
 
   caCert, err := ioutil.ReadFile(certFile)
   if err != nil {
+    log.Errorf("Error loading cert: %s", err)
     log.Error(err)
     return
   }
@@ -230,6 +252,7 @@ func main() {
   file, err := os.Open(keysFilePath)
 
   if err != nil {
+    log.Errorf("Error loading keys file: %s", err)
     log.Error(err)
     return
   }
@@ -238,6 +261,7 @@ func main() {
   file.Close()
 
   if err != nil {
+    log.Errorf("Error creating auther: %s", err)
     log.Error(err)
     return
   }
