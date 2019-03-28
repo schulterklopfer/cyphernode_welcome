@@ -6,6 +6,7 @@
   <link rel="stylesheet" href="static/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="static/css/main.css" rel="stylesheet">
   <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/solid.css" integrity="sha384-QokYePQSOwpBDuhlHOsX0ymF6R/vLk/UQVz3WHa6wygxI5oGTmDTv8wahFOSspdm" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/fontawesome.css" integrity="sha384-vd1e11sR28tEK9YANUtpIOdjGW14pS87bUBuOIoBILVWLFnS+MCX9T6MMf0VdPGq" crossorigin="anonymous">
 </head>
 
 <body>
@@ -71,12 +72,34 @@
         <table class="table table-striped table-borderless">
           <thead>
           <tr>
-            <th>Feature</th>
+            <th>Features</th>
             <th></th>
           </tr>
           </thead>
           <tbody>
-          {{range .Features}}<tr><td>{{.Name}}</td><td>{{.Working}}</td></tr>{{else}}<div><strong>no rows</strong></div>{{end}}
+          {{range .Features}}
+            <tr>
+              <td>{{.Name}} {{if .CoreFeature}}
+                  <span style="color: #410051;">
+                  <i class="fas fa-grin-stars"></i>
+                </span>
+                {{end}}
+              </td>
+              <td>
+                {{if .Working}}
+                  <span class="float-right" style="color: #410051;">
+                    <i class="fas fa-check-circle"></i>
+                  </span>
+                {{else}}
+                  <span class="float-right" style="color: Tomato;">
+                    <i class="fas fa-ban"></i>
+                  </span>
+                {{end}}
+              </td>
+            </tr>
+          {{else}}
+            <div><strong>no rows</strong></div>
+          {{end}}
           </tbody>
         </table>
       </div>
@@ -84,12 +107,29 @@
         <table class="table table-striped table-borderless">
           <thead>
           <tr>
-            <th>Container</th>
+            <th>Containers</th>
             <th></th>
           </tr>
           </thead>
           <tbody>
-          {{range .Containers}}<tr><td>{{.Name}}</td><td>{{if .Active}}<span class="fas fa-check-circle"></span>{{else}}<i class="fas fa-ban"></i>{{end}}</td></tr>{{else}}<div><strong>no rows</strong></div>{{end}}
+          {{range .Containers}}
+            <tr>
+              <td>{{.Name}}</td>
+              <td align="left">
+                {{if .Active}}
+                  <span class="float-right" style="color: #410051;">
+                    <i class="fas fa-check-circle"></i>
+                  </span>
+                {{else}}
+                  <span class="float-right" style="color: Tomato;">
+                    <i class="fas fa-ban"></i>
+                  </span>
+                {{end}}
+              </td>
+            </tr>
+          {{else}}
+            <div><strong>no rows</strong></div>
+          {{end}}
           </tbody>
         </table>
       </div>

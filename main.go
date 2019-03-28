@@ -47,6 +47,7 @@ type BlockChainInfo struct {
 
 type InstallationInfoFeature struct {
   Name string `json:"name"`
+  CoreFeature bool `json:"coreFeature"`
   Working bool `json:"working"`
 }
 
