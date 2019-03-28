@@ -28,7 +28,7 @@ import (
   "bytes"
   "crypto/tls"
   "crypto/x509"
-  "cyphernode_status/cnAuth"
+  "cyphernode_welcome/cnAuth"
   "encoding/json"
   "fmt"
   "github.com/gorilla/mux"
