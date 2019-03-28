@@ -79,11 +79,7 @@
           <tbody>
           {{range .Features}}
             <tr>
-              <td>{{.Name}} {{if .CoreFeature}}
-                  <span style="color: #410051;">
-                  <i class="fas fa-grin-stars"></i>
-                </span>
-                {{end}}
+              <td>{{.Name}}{{if .CoreFeature}} <span class="small">(core component)</span>{{end}}
               </td>
               <td>
                 {{if .Working}}
