@@ -3,10 +3,10 @@ listen = "0.0.0.0:8080"
 index_template = "templates/index.html"
 
 [gatekeeper]
-status_url = "https://127.0.0.1/v0/getblockchaininfo"
-installation_info_url = "https://127.0.0.1/s/stats/installation.json"
-config_archive_url = "https://127.0.0.1/s/stats/config.7z"
-certs_url = "https://127.0.0.1/s/stats/client.7z"
+status_url = "https://127.0.0.1:2009/v0/getblockchaininfo"
+installation_info_url = "https://127.0.0.1:2009/s/stats/installation.json"
+config_archive_url = "https://127.0.0.1:2009/s/stats/config.7z"
+certs_url = "https://127.0.0.1:2009/s/stats/client.7z"
 
 key_label = "000"
 key_file = "data/keys.properties"

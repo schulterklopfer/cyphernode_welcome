@@ -61,8 +61,6 @@ type InstallationInfo struct {
   Containers []InstallationInfoContainer  `json:"containers"`
 }
 
-
-
 var auth *cnAuth.CnAuth
 var statsKeyLabel string
 var rootTemplate *template.Template
@@ -70,6 +68,7 @@ var statusUrl string
 var installationInfoUrl string
 var configArchiveUrl string
 var certsUrl string
+var passwordHashes map[string][]byte
 
 var httpClient *http.Client
 var log = logging.MustGetLogger("main")
@@ -199,6 +198,13 @@ func CertsHandler(w http.ResponseWriter, r *http.Request) {
   fmt.Fprint(w, bytes.NewBuffer(body))
 }
 
+func Secret(user, realm string) string {
+  if user == "john" {
+    // password is "hello"
+    return "$1$dlPL2MqE$oQmn16q49SqdmhenQuNgs1"
+  }
+  return ""
+}
 
 func main() {
 
@@ -249,7 +255,6 @@ func main() {
     },
   }
 
-
   file, err := os.Open(keysFilePath)
 
   if err != nil {
@@ -270,6 +275,7 @@ func main() {
   log.Infof("Started cyphernode status page backend. URL Port [%v] ",listenTo)
 
   router := mux.NewRouter()
+
   router.HandleFunc("/", RootHandler)
   router.HandleFunc("/verificationprogress", VerificationProgressHandler)
   router.HandleFunc("/config.7z", ConfigHandler)
@@ -278,6 +284,7 @@ func main() {
   router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("./static"))))
 
   http.Handle("/", router)
+  route := router.PathPrefix("/static")
 
-  log.Fatal(http.ListenAndServe(listenTo, nil))
+  log.Fatal(route, http.ListenAndServe(listenTo, nil))
 }
