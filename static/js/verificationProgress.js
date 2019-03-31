@@ -32,8 +32,17 @@ var durationFormatter = function( seconds ) {
 var loadVerificationProgress = function() {
     console.log( "loading verification progress" );
 
+    var base = document.getElementById("base");
+    var url = 'verificationprogress';
+
+    if( base && base.href ) {
+        url = base.href+url;
+    } else {
+        url = '/'+url;
+    }
+
     var request = new XMLHttpRequest();
-    request.open('GET', '/verificationprogress');
+    request.open('GET', url );
     request.responseType = 'text';
 
     request.onerror = function(e) {  }
