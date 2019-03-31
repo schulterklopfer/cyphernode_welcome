@@ -56,9 +56,10 @@ type InstallationInfoContainer struct {
   Active bool `json:"active"`
 }
 
-type InstallationInfo struct {
+type TemplateData struct {
   Features []InstallationInfoFeature  `json:"features"`
   Containers []InstallationInfoContainer  `json:"containers"`
+  ForwardedPrefix string
 }
 
 var auth *cnAuth.CnAuth
@@ -73,11 +74,13 @@ var passwordHashes map[string][]byte
 var httpClient *http.Client
 var log = logging.MustGetLogger("main")
 
-func RootHandler(w http.ResponseWriter, _ *http.Request) {
+
+func RootHandler(w http.ResponseWriter, req *http.Request) {
   installationInfo, err := getInstallatioInfo()
   if err != nil {
     log.Errorf("Error retrieving installation info %s", err )
   }
+  installationInfo.ForwardedPrefix = req.Header.Get("X-Forwarded-Prefix")
   rootTemplate.Execute(w, installationInfo)
 }
 
@@ -118,7 +121,7 @@ func getBodyUsingAuth( url string ) ([]byte,error) {
   return body, nil
 }
 
-func  getInstallatioInfo() (*InstallationInfo,error) {
+func  getInstallatioInfo() (*TemplateData,error) {
   log.Info("getInstallatioInfo")
   body,err := getBodyUsingAuth( installationInfoUrl )
 
@@ -130,7 +133,7 @@ func  getInstallatioInfo() (*InstallationInfo,error) {
   log.Infof("getInstallatioInfo: %", string(body))
 
 
-  installationInfo := new( InstallationInfo )
+  installationInfo := new(TemplateData)
 
   err = json.Unmarshal( body, &installationInfo )
 
