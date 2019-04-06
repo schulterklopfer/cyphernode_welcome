@@ -60,6 +60,7 @@ type TemplateData struct {
   Features []InstallationInfoFeature  `json:"features"`
   Containers []InstallationInfoContainer  `json:"containers"`
   ForwardedPrefix string
+  FeatureByName map[string]bool
 }
 
 var auth *cnAuth.CnAuth
@@ -140,6 +141,12 @@ func  getInstallatioInfo() (*TemplateData,error) {
   if err != nil {
     log.Errorf("getInstallatioInfo: %s", err)
     return nil,err
+  }
+
+  // map features to FeatureByName
+  installationInfo.FeatureByName = make( map[string]bool, 0 )
+  for f := 0 ; f< len(installationInfo.Features); f++ {
+    installationInfo.FeatureByName[installationInfo.Features[f].Name] = installationInfo.Features[f].Working
   }
 
   log.Info("getInstallatioInfo: json done")
