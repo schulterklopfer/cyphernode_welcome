@@ -70,7 +70,7 @@ var loadVerificationProgress = function() {
 
                         var eta = 0;
                         if( deltaP !== 0 ) {
-                            deltaS/deltaP;
+                            eta = deltaS/deltaP;
                         }
                         var pBar = document.getElementById('progress-bar');
                         if( pBar ) {
